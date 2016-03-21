@@ -25,6 +25,9 @@ type Spec struct {
 
 	// Linux is platform specific configuration for Linux based containers.
 	Linux Linux `json:"linux" platform:"linux"`
+
+	// Solaris is platform specific configuration for Solaris based containers.
+	Solaris Solaris `json:"solaris" platform:"solaris"`
 }
 
 // Process contains information to start a specific application inside the container.
@@ -57,11 +60,11 @@ type Process struct {
 // main process.
 type User struct {
 	// UID is the user id. (this field is platform dependent)
-	UID uint32 `json:"uid,omitempty" platform:"linux"`
+	UID uint32 `json:"uid,omitempty" platform:"linux, solaris"`
 	// GID is the group id. (this field is platform dependent)
-	GID uint32 `json:"gid,omitempty" platform:"linux"`
+	GID uint32 `json:"gid,omitempty" platform:"linux, solaris"`
 	// AdditionalGids are additional group ids set for the container's process. (this field is platform dependent)
-	AdditionalGids []uint32 `json:"additionalGids,omitempty" platform:"linux"`
+	AdditionalGids []uint32 `json:"additionalGids,omitempty" platform:"linux, solaris"`
 }
 
 // Root contains information about the container's root filesystem on the host.
@@ -142,6 +145,31 @@ type Linux struct {
 	ReadonlyPaths []string `json:"readonlyPaths,omitempty"`
 	// MountLabel specifies the selinux context for the mounts in the container.
 	MountLabel string `json:"mountLabel,omitempty"`
+}
+
+type Solaris struct {
+	Globaltime     string        `json:"global-time"`
+	Iptype         string        `json:"ip-type"`
+	Memory         string        `json:"memory"`
+	Swap           string        `json:"swap"`
+	CpusetCpus     string        `json:"cpuset-cpus"`
+	CpusetMems     string        `json:"cpuset-mems"`
+	CpuQuota       string        `json:"cpuquota"`
+	CpuShare       string        `json:"cpushare"`
+	ReadonlyRootfs string        `json:"readonlyrootfs"`
+	ShmSize        string        `json:"shmsize"`
+	SolarisAnet    []SolarisAnet `json:"anet,omitempty"`
+}
+
+type SolarisAnet struct {
+	Linkname          string `json:"linkname"`
+	Lowerlink         string `json:"lower-link"`
+	Allowedaddr       string `json:"allowed-address"`
+	Configallowedaddr string `json:"configure-allowed-address"`
+	Defrouter         string `json:"defrouter"`
+	Linkprotection    string `json:"link-protection"`
+	Macaddress        string `json:"mac-address"`
+	Vlan              string `json:"vlan-id"`
 }
 
 // Namespace is the configuration for a Linux namespace

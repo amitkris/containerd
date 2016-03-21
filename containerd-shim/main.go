@@ -54,9 +54,10 @@ func start(log *os.File) error {
 	signals := make(chan os.Signal, 2048)
 	signal.Notify(signals)
 	// set the shim as the subreaper for all orphaned processes created by the container
-	if err := osutils.SetSubreaper(1); err != nil {
-		return err
-	}
+	// XXX Solaris
+	//if err := osutils.SetSubreaper(1); err != nil {
+	//	return err
+	//}
 	// open the exit pipe
 	f, err := os.OpenFile("exit", syscall.O_WRONLY, 0)
 	if err != nil {

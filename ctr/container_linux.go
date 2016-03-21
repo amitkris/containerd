@@ -1,3 +1,5 @@
+// +build !windows, !solaris
+
 package main
 
 import (

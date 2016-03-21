@@ -6,8 +6,10 @@ import (
 	"github.com/docker/containerd/runtime"
 )
 
+//XXX Solaris
+
 func NewMonitor() (*Monitor, error) {
-	return &Monitor{}, errors.New("Monitor NewMonitor() not implemented on Solaris")
+	return &Monitor{}, nil
 }
 
 type Monitor struct {
@@ -23,11 +25,11 @@ func (m *Monitor) OOMs() chan string {
 }
 
 func (m *Monitor) Monitor(p runtime.Process) error {
-	return errors.New("Monitor Monitor() not implemented on Solaris")
+	return errors.New("Monitor not implemented on Solaris")
 }
 
 func (m *Monitor) MonitorOOM(c runtime.Container) error {
-	return errors.New("Monitor MonitorOOM() not implemented on Solaris")
+	return nil
 }
 
 func (m *Monitor) Close() error {
