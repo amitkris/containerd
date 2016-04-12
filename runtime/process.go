@@ -68,6 +68,7 @@ func newProcess(config *processConfig) (*process, error) {
 	if err != nil {
 		return nil, err
 	}
+	fmt.Printf("Calling create on process.json, stdio is: %+v\n", p.stdio)
 	f, err := os.Create(filepath.Join(config.root, "process.json"))
 	if err != nil {
 		return nil, err

@@ -89,13 +89,17 @@ var daemonFlags = []cli.Flag{
 
 func main() {
 	logrus.SetFormatter(&logrus.TextFormatter{TimestampFormat: time.RFC3339Nano})
+	fmt.Printf("containerd start daemon\n")
+	fmt.Printf("1.0\n")
 	app := cli.NewApp()
+	fmt.Printf("2.0\n")
 	app.Name = "containerd"
 	if containerd.GitCommit != "" {
 		app.Version = fmt.Sprintf("%s commit: %s", containerd.Version, containerd.GitCommit)
 	} else {
 		app.Version = containerd.Version
 	}
+	fmt.Printf("3.0\n")
 	app.Usage = usage
 	app.Flags = daemonFlags
 	app.Before = func(context *cli.Context) error {
@@ -122,6 +126,7 @@ func main() {
 			logrus.Fatal(err)
 		}
 	}
+	fmt.Printf("args to run are: %+v\n", os.Args)
 	if err := app.Run(os.Args); err != nil {
 		logrus.Fatal(err)
 	}
@@ -142,12 +147,14 @@ func daemon(context *cli.Context) error {
 	if err != nil {
 		return err
 	}
+	fmt.Printf("2.2\n")
 	wg := &sync.WaitGroup{}
 	for i := 0; i < 10; i++ {
 		wg.Add(1)
 		w := supervisor.NewWorker(sv, wg)
 		go w.Start()
 	}
+	fmt.Printf("2.4\n")
 	if err := sv.Start(); err != nil {
 		return err
 	}
@@ -183,7 +190,9 @@ func startServer(protocol, address string, sv *supervisor.Supervisor) (*grpc.Ser
 		return nil, fmt.Errorf("incorrect number of listeners")
 	}
 	l := sockets[0]
+	fmt.Printf("2.7\n")
 	s := grpc.NewServer()
+	fmt.Printf("2.8\n")
 	types.RegisterAPIServer(s, server.NewServer(sv))
 	go func() {
 		logrus.Debugf("containerd: grpc api on %s", address)
@@ -192,6 +201,8 @@ func startServer(protocol, address string, sv *supervisor.Supervisor) (*grpc.Ser
 		}
 	}()
 	return s, nil
+	fmt.Printf("2.9\n")
+	logrus.Debugf("containerd: grpc api on %s", address)
 }
 
 // getDefaultID returns the hostname for the instance host

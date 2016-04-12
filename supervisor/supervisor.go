@@ -2,6 +2,7 @@ package supervisor
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -245,6 +246,7 @@ func (s *Supervisor) notifySubscribers(e Event) {
 // therefore it is save to do operations in the handlers that modify state of the system or
 // state of the Supervisor
 func (s *Supervisor) Start() error {
+	fmt.Printf("In supervisor start\n")
 	logrus.WithFields(logrus.Fields{
 		"stateDir":    s.stateDir,
 		"runtime":     s.runtime,
@@ -292,7 +294,9 @@ func (s *Supervisor) oomHandler() {
 }
 
 func (s *Supervisor) monitorProcess(p runtime.Process) error {
-	return s.monitor.Monitor(p)
+	//XXX Solaris
+	return nil
+	//return s.monitor.Monitor(p)
 }
 
 func (s *Supervisor) restore() error {

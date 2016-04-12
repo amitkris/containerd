@@ -1,6 +1,7 @@
 package supervisor
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -35,6 +36,7 @@ type worker struct {
 }
 
 func (w *worker) Start() {
+	fmt.Printf("In worker start\n")
 	defer w.wg.Done()
 	for t := range w.s.startTasks {
 		started := time.Now()

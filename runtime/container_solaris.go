@@ -53,6 +53,7 @@ func (c *container) DeleteCheckpoint(name string) error {
 }
 
 func (c *container) Start(checkpoint string, s Stdio) (Process, error) {
+	fmt.Printf("In runtime container Start and stdio is: %+v\n", s)
 	processRoot := filepath.Join(c.root, c.id, InitProcessID)
 	if err := os.Mkdir(processRoot, 0755); err != nil {
 		return nil, err
@@ -64,23 +65,26 @@ func (c *container) Start(checkpoint string, s Stdio) (Process, error) {
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setpgid: true,
 	}
-	spec, err := c.readSpec()
-	if err != nil {
-		return nil, err
-	}
+	fmt.Printf("calling read spec\n")
+	//spec, err := c.readSpec()
+	//if err != nil {
+	//	return nil, err
+	//}
 	config := &processConfig{
-		checkpoint:  checkpoint,
-		root:        processRoot,
-		id:          InitProcessID,
-		c:           c,
-		stdio:       s,
-		spec:        spec,
-		processSpec: specs.ProcessSpec(spec.Process),
+		checkpoint: checkpoint,
+		root:       processRoot,
+		id:         InitProcessID,
+		c:          c,
+		stdio:      s,
+		//spec:        spec,
+		//processSpec: specs.ProcessSpec(spec.Process),
 	}
+	fmt.Printf("calling new process stdio is: %+v\n", config.stdio)
 	p, err := newProcess(config)
 	if err != nil {
 		return nil, err
 	}
+	fmt.Printf("calling startCmd\n")
 	if err := c.startCmd(InitProcessID, cmd, p); err != nil {
 		return nil, err
 	}
@@ -136,9 +140,11 @@ func (c *container) startCmd(pid string, cmd *exec.Cmd, p *process) error {
 		}
 		return err
 	}
+	fmt.Printf("calling wait for start\n")
 	if err := waitForStart(p, cmd); err != nil {
 		return err
 	}
+	fmt.Printf("returned from wait for start\n")
 	c.processes[pid] = p
 	return nil
 }
@@ -160,6 +166,8 @@ func (c *container) OOM() (OOM, error) {
 }
 
 func waitForStart(p *process, cmd *exec.Cmd) error {
+	return nil
+
 	for i := 0; i < 300; i++ {
 		if _, err := p.getPidFromFile(); err != nil {
 			if os.IsNotExist(err) || err == errInvalidPidInt {

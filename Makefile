@@ -32,6 +32,7 @@ all: client daemon shim
 static: client-static daemon-static shim-static
 
 bin:
+	echo "In bin"
 	mkdir -p bin/
 
 clean:

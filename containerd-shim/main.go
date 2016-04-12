@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"syscall"
+	"time"
 
 	"github.com/docker/containerd/osutils"
 	"github.com/docker/docker/pkg/term"
@@ -59,11 +60,13 @@ func start(log *os.File) error {
 	//	return err
 	//}
 	// open the exit pipe
+	logrus.Warnf("in containerd-shim start, opening exit pipe\n")
 	f, err := os.OpenFile("exit", syscall.O_WRONLY, 0)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
+	logrus.Warnf("in containerd-shim start, opening control\n")
 	control, err := os.OpenFile("control", syscall.O_RDWR, 0)
 	if err != nil {
 		return err
@@ -78,10 +81,14 @@ func start(log *os.File) error {
 			writeMessage(log, "warn", err)
 		}
 	}()
+	logrus.Warnf("in containerd-shim start, calling p.start\n")
 	if err := p.start(); err != nil {
 		p.delete()
+		logrus.Warnf("p.start returned with error: %+v\n", err)
 		return err
 	}
+	logrus.Warnf("going to sleep\n")
+	time.Sleep(time.Second * 30)
 	go func() {
 		for {
 			var msg, w, h int
@@ -107,6 +114,7 @@ func start(log *os.File) error {
 		}
 	}()
 	var exitShim bool
+	logrus.Warnf("signals received are: %+v\n", signals)
 	for s := range signals {
 		switch s {
 		case syscall.SIGCHLD:
@@ -126,6 +134,7 @@ func start(log *os.File) error {
 			return nil
 		}
 	}
+	logrus.Warnf("exit start\n")
 	return nil
 }
 

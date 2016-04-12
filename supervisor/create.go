@@ -1,6 +1,7 @@
 package supervisor
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/docker/containerd/runtime"
@@ -58,6 +59,9 @@ func (s *Supervisor) start(t *StartTask) error {
 	if t.Checkpoint != nil {
 		task.Checkpoint = t.Checkpoint.Name
 	}
+	// Below line was carried forward frm merge
+	task.setTaskCheckpoint(t)
+	fmt.Printf("in supervisor/creat.go little start stdin %s, stdout: %s, stderr: %s\n", t.Stdin, t.Stdout, t.Stderr)
 
 	s.startTasks <- task
 	ContainerCreateTimer.UpdateSince(start)

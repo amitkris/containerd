@@ -34,6 +34,7 @@ func getClient(ctx *cli.Context) types.APIClient {
 	}
 
 	// reset the logger for grpc to log to dev/null so that it does not mess with our stdio
+	fmt.Printf("In get client\n")
 	grpclog.SetLogger(log.New(ioutil.Discard, "", log.LstdFlags))
 	dialOpts := []grpc.DialOption{grpc.WithInsecure(), grpc.WithTimeout(ctx.GlobalDuration("conn-timeout"))}
 	dialOpts = append(dialOpts,
@@ -41,6 +42,7 @@ func getClient(ctx *cli.Context) types.APIClient {
 			return net.DialTimeout(bindParts[0], bindParts[1], timeout)
 		},
 		))
+	fmt.Printf("address to dial %+v\n", ctx.GlobalString("address"))
 	conn, err := grpc.Dial(bindSpec, dialOpts...)
 	if err != nil {
 		fatal(err.Error(), 1)
@@ -103,9 +105,11 @@ var listCommand = cli.Command{
 
 func listContainers(context *cli.Context) {
 	c := getClient(context)
+	fmt.Printf("returned from getclient, conn is: %+v\n", c)
 	resp, err := c.State(netcontext.Background(), &types.StateRequest{
 		Id: context.Args().First(),
 	})
+	fmt.Printf("Got response going to print\n")
 	if err != nil {
 		fatal(err.Error(), 1)
 	}
@@ -169,6 +173,7 @@ var startCommand = cli.Command{
 				os.RemoveAll(filepath.Dir(s.stdin))
 			}
 		}()
+		fmt.Printf("Return value from createStdio is %+v\n", s)
 		if err != nil {
 			fatal(err.Error(), 1)
 		}
@@ -196,30 +201,38 @@ var startCommand = cli.Command{
 			}
 		}
 		defer restoreAndCloseStdin()
+		fmt.Printf("In start command, got Client\n")
+		fmt.Printf("1.0\n")
 		if context.Bool("attach") {
-			mkterm, err := readTermSetting(bpath)
-			if err != nil {
-				fatal(err.Error(), 1)
-			}
-			tty = mkterm
-			if mkterm {
+			/*
+				mkterm, err := readTermSetting(bpath)
+				if err != nil {
+					fatal(err.Error(), 1)
+				}
+				tty = mkterm
+			*/
+			if true {
 				s, err := term.SetRawTerminal(os.Stdin.Fd())
 				if err != nil {
 					fatal(err.Error(), 1)
 				}
 				state = s
 			}
+			fmt.Printf("going to attach stdio\n")
 			if err := attachStdio(s); err != nil {
 				fatal(err.Error(), 1)
 			}
 		}
+		fmt.Printf("2.0\n")
 		events, err := c.Events(netcontext.Background(), &types.EventsRequest{})
 		if err != nil {
 			fatal(err.Error(), 1)
 		}
+		fmt.Printf("3.0\n")
 		if _, err := c.CreateContainer(netcontext.Background(), r); err != nil {
 			fatal(err.Error(), 1)
 		}
+		fmt.Printf("4.0\n")
 		if context.Bool("attach") {
 			go func() {
 				io.Copy(stdin, os.Stdin)
@@ -232,6 +245,7 @@ var startCommand = cli.Command{
 				}
 				restoreAndCloseStdin()
 			}()
+			fmt.Printf("6.0\n")
 			if tty {
 				resize(id, "init", c)
 				go func() {

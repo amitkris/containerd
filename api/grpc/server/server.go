@@ -41,6 +41,7 @@ func (s *apiServer) GetServerVersion(ctx context.Context, c *types.GetServerVers
 }
 
 func (s *apiServer) CreateContainer(ctx context.Context, c *types.CreateContainerRequest) (*types.CreateContainerResponse, error) {
+	fmt.Printf("Incoming create container request: container request is: %+v\n", c)
 	if c.BundlePath == "" {
 		return nil, errors.New("empty bundle path")
 	}
@@ -64,7 +65,9 @@ func (s *apiServer) CreateContainer(ctx context.Context, c *types.CreateContaine
 	if err := <-e.ErrorCh(); err != nil {
 		return nil, err
 	}
+	fmt.Printf("Waiting for startResponse\n")
 	r := <-e.StartResponse
+	fmt.Printf("got startResponse\n")
 	apiC, err := createAPIContainer(r.Container, false)
 	if err != nil {
 		return nil, err
@@ -154,12 +157,15 @@ func (s *apiServer) Signal(ctx context.Context, r *types.SignalRequest) (*types.
 }
 
 func (s *apiServer) State(ctx context.Context, r *types.StateRequest) (*types.StateResponse, error) {
+	fmt.Printf("In server from client?\n")
 	e := &supervisor.GetContainersTask{}
 	e.ID = r.Id
+	fmt.Printf("About to send task\n")
 	s.sv.SendTask(e)
 	if err := <-e.ErrorCh(); err != nil {
 		return nil, err
 	}
+	fmt.Printf("Returned from send task\n")
 	m := s.sv.Machine()
 	state := &types.StateResponse{
 		Machine: &types.Machine{
@@ -167,6 +173,7 @@ func (s *apiServer) State(ctx context.Context, r *types.StateRequest) (*types.St
 			Memory: uint64(m.Memory),
 		},
 	}
+	fmt.Printf("About to list containers\n")
 	for _, c := range e.Containers {
 		apiC, err := createAPIContainer(c, true)
 		if err != nil {
@@ -178,10 +185,12 @@ func (s *apiServer) State(ctx context.Context, r *types.StateRequest) (*types.St
 }
 
 func createAPIContainer(c runtime.Container, getPids bool) (*types.Container, error) {
+	fmt.Printf("in createAPIcontainers\n")
 	processes, err := c.Processes()
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, "get processes for container: "+err.Error())
 	}
+	fmt.Printf("1.0\n")
 	var procs []*types.Process
 	for _, p := range processes {
 		oldProc := p.Spec()
@@ -215,13 +224,16 @@ func createAPIContainer(c runtime.Container, getPids bool) (*types.Container, er
 		}
 		procs = append(procs, proc)
 	}
+	fmt.Printf("2.0\n")
 	var pids []int
 	state := c.State()
+	fmt.Printf("3.0\n")
 	if getPids && (state == runtime.Running || state == runtime.Paused) {
 		if pids, err = c.Pids(); err != nil {
 			return nil, grpc.Errorf(codes.Internal, "get all pids for container: "+err.Error())
 		}
 	}
+	fmt.Printf("4.0\n")
 	return &types.Container{
 		Id:         c.ID(),
 		BundlePath: c.Path(),

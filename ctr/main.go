@@ -29,13 +29,16 @@ func main() {
 			panic(e)
 		}
 	}()
+	fmt.Printf("In ctr cli\n")
 	app := cli.NewApp()
 	app.Name = "ctr"
+	fmt.Printf("1.0\n")
 	if containerd.GitCommit != "" {
 		app.Version = fmt.Sprintf("%s commit: %s", containerd.Version, containerd.GitCommit)
 	} else {
 		app.Version = containerd.Version
 	}
+	fmt.Printf("2.0\n")
 	app.Usage = usage
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
@@ -53,6 +56,7 @@ func main() {
 			Usage: "GRPC connection timeout",
 		},
 	}
+	fmt.Printf("3.0\n")
 	app.Commands = []cli.Command{
 		checkpointCommand,
 		containersCommand,
@@ -60,12 +64,14 @@ func main() {
 		stateCommand,
 		versionCommand,
 	}
+	fmt.Printf("4.0\n")
 	app.Before = func(context *cli.Context) error {
 		if context.GlobalBool("debug") {
 			logrus.SetLevel(logrus.DebugLevel)
 		}
 		return nil
 	}
+	fmt.Printf("args to run are : %+v\n", os.Args)
 	if err := app.Run(os.Args); err != nil {
 		logrus.Fatal(err)
 	}

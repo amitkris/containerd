@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
+	_ "io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
+	_ "strconv"
 	"sync"
 	"syscall"
 	"time"
@@ -64,6 +64,7 @@ type process struct {
 }
 
 func newProcess(id, bundle, runtimeName string) (*process, error) {
+	logrus.Warnf("In newProcess\n")
 	p := &process{
 		id:      id,
 		bundle:  bundle,
@@ -74,6 +75,7 @@ func newProcess(id, bundle, runtimeName string) (*process, error) {
 		return nil, err
 	}
 	p.state = s
+	logrus.Warnf("p.state is: %+v\n", p.state)
 	if s.Checkpoint != "" {
 		cpt, err := loadCheckpoint(bundle, s.Checkpoint)
 		if err != nil {
@@ -81,9 +83,11 @@ func newProcess(id, bundle, runtimeName string) (*process, error) {
 		}
 		p.checkpoint = cpt
 	}
+	//XXX Solaris
 	if err := p.openIO(); err != nil {
 		return nil, err
 	}
+	logrus.Warnf("Returning from newProcess\n")
 	return p, nil
 }
 
@@ -114,62 +118,19 @@ func loadCheckpoint(bundle, name string) (*checkpoint, error) {
 }
 
 func (p *process) start() error {
-	cwd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-	logPath := filepath.Join(cwd, "log.json")
-	args := append([]string{
-		"--log", logPath,
-		"--log-format", "json",
-	}, p.state.RuntimeArgs...)
-	if p.state.Exec {
-		args = append(args, "exec",
-			"--process", filepath.Join(cwd, "process.json"),
-			"--console", p.consolePath,
-		)
-	} else if p.checkpoint != nil {
-		args = append(args, "restore",
-			"--image-path", filepath.Join(p.bundle, "checkpoints", p.checkpoint.Name),
-		)
-		add := func(flags ...string) {
-			args = append(args, flags...)
-		}
-		if p.checkpoint.Shell {
-			add("--shell-job")
-		}
-		if p.checkpoint.Tcp {
-			add("--tcp-established")
-		}
-		if p.checkpoint.UnixSockets {
-			add("--ext-unix-sk")
-		}
-		if p.state.NoPivotRoot {
-			add("--no-pivot")
-		}
-	} else {
-		args = append(args, "start",
-			"--bundle", p.bundle,
-			"--console", p.consolePath,
-		)
-		if p.state.NoPivotRoot {
-			args = append(args, "--no-pivot")
-		}
-	}
-	args = append(args,
-		"-d",
-		"--pid-file", filepath.Join(cwd, "pid"),
-		p.id,
-	)
-	cmd := exec.Command(p.runtime, args...)
-	cmd.Dir = p.bundle
+	logrus.Warnf("In process start stdio is: %+v\n", p.stdio)
+	cmd := exec.Command(p.runtime, "create")
+	//cmd := exec.Command("/usr/bin/bash")
+	cmd.Dir = filepath.Dir(p.bundle)
 	cmd.Stdin = p.stdio.stdin
 	cmd.Stdout = p.stdio.stdout
 	cmd.Stderr = p.stdio.stderr
 	// Call out to setPDeathSig to set SysProcAttr as elements are platform specific
 	cmd.SysProcAttr = setPDeathSig()
 
+	logrus.Warnf("cmd is: %+v\n", cmd)
 	if err := cmd.Start(); err != nil {
+		logrus.Warnf("Error on cmd.Start is: %+v\n", err)
 		if exErr, ok := err.(*exec.Error); ok {
 			if exErr.Err == exec.ErrNotFound || exErr.Err == os.ErrNotExist {
 				return fmt.Errorf("%s not installed on system", p.runtime)
@@ -177,24 +138,99 @@ func (p *process) start() error {
 		}
 		return err
 	}
-	p.stdio.stdout.Close()
-	p.stdio.stderr.Close()
 	if err := cmd.Wait(); err != nil {
+		logrus.Warnf("Error on cmd.Wait is: %+v\n", err)
 		if _, ok := err.(*exec.ExitError); ok {
 			return errRuntime
 		}
 		return err
 	}
-	data, err := ioutil.ReadFile("pid")
-	if err != nil {
-		return err
-	}
-	pid, err := strconv.Atoi(string(data))
-	if err != nil {
-		return err
-	}
-	p.containerPid = pid
+	logrus.Warnf("returned from  cmd.Wait\n")
 	return nil
+	/*
+		cwd, err := os.Getwd()
+		if err != nil {
+			return err
+		}
+		logPath := filepath.Join(cwd, "log.json")
+		args := []string{
+			"--log", logPath,
+			"--log-format", "json",
+		}
+		if p.state.Exec {
+			args = append(args, "exec",
+				"--process", filepath.Join(cwd, "process.json"),
+				"--console", p.consolePath,
+			)
+		} else if p.checkpoint != nil {
+			args = append(args, "restore",
+				"--image-path", filepath.Join(p.bundle, "checkpoints", p.checkpoint.Name),
+			)
+			add := func(flags ...string) {
+				args = append(args, flags...)
+			}
+			if p.checkpoint.Shell {
+				add("--shell-job")
+			}
+			if p.checkpoint.Tcp {
+				add("--tcp-established")
+			}
+			if p.checkpoint.UnixSockets {
+				add("--ext-unix-sk")
+			}
+		} else {
+			args = append(args, "start",
+				"--bundle", p.bundle,
+				"--console", p.consolePath,
+			)
+		}
+		args = append(args,
+			"-d",
+			"--pid-file", filepath.Join(cwd, "pid"),
+			p.id,
+		)
+		logrus.Warnf("Process is: %+v\n", p)
+		cmd := exec.Command(p.runtime, args...)
+		cmd.Dir = p.bundle
+		cmd.Stdin = p.stdio.stdin
+		cmd.Stdout = p.stdio.stdout
+		cmd.Stderr = p.stdio.stderr
+		// set the parent death signal to SIGKILL so that if the shim dies the container
+		// process also dies
+		//XXX Solaris
+		//cmd.SysProcAttr = &syscall.SysProcAttr{
+		//	Pdeathsig: syscall.SIGKILL,
+		//}
+		if err := cmd.Start(); err != nil {
+			logrus.Warnf("Error on cmd.Start is: %+v\n", err)
+			if exErr, ok := err.(*exec.Error); ok {
+				if exErr.Err == exec.ErrNotFound || exErr.Err == os.ErrNotExist {
+					return fmt.Errorf("runc not installed on system")
+				}
+			}
+			return err
+		}
+		p.stdio.stdout.Close()
+		p.stdio.stderr.Close()
+		if err := cmd.Wait(); err != nil {
+			if _, ok := err.(*exec.ExitError); ok {
+				return errRuntime
+			}
+			logrus.Warnf("Error on cmd.Wait is: %+v\n", err)
+			return err
+		}
+		logrus.Warnf("returned from  cmd.Wait\n")
+		data, err := ioutil.ReadFile("pid")
+		if err != nil {
+			return err
+		}
+		pid, err := strconv.Atoi(string(data))
+		if err != nil {
+			return err
+		}
+		p.containerPid = pid
+		return nil
+	*/
 }
 
 func (p *process) pid() int {
@@ -217,44 +253,48 @@ func (p *process) openIO() error {
 	p.stdio = &stdio{}
 	var (
 		uid = p.state.RootUID
-		gid = p.state.RootGID
+		//gid = p.state.RootGID
 	)
-	go func() {
-		if stdinCloser, err := os.OpenFile(p.state.Stdin, syscall.O_WRONLY, 0); err == nil {
-			p.stdinCloser = stdinCloser
-		}
-	}()
-
-	if p.state.Terminal {
-		master, console, err := newConsole(uid, gid)
-		if err != nil {
-			return err
-		}
-		p.console = master
-		p.consolePath = console
-		stdin, err := os.OpenFile(p.state.Stdin, syscall.O_RDONLY, 0)
-		if err != nil {
-			return err
-		}
-		go io.Copy(master, stdin)
-		stdout, err := os.OpenFile(p.state.Stdout, syscall.O_RDWR, 0)
-		if err != nil {
-			return err
-		}
-		p.Add(1)
+	/*
 		go func() {
-			io.Copy(stdout, master)
-			master.Close()
-			p.Done()
+			if stdinCloser, err := os.OpenFile(p.state.Stdin, syscall.O_WRONLY, 0); err == nil {
+				p.stdinCloser = stdinCloser
+			}
 		}()
-		return nil
-	}
+
+		if p.state.Terminal {
+			master, console, err := newConsole(uid, gid)
+			if err != nil {
+				return err
+			}
+			p.console = master
+			p.consolePath = console
+			stdin, err := os.OpenFile(p.state.Stdin, syscall.O_RDONLY, 0)
+			if err != nil {
+				return err
+			}
+			go io.Copy(master, stdin)
+			stdout, err := os.OpenFile(p.state.Stdout, syscall.O_RDWR, 0)
+			if err != nil {
+				return err
+			}
+			p.Add(1)
+			go func() {
+				io.Copy(stdout, master)
+				master.Close()
+				p.Done()
+			}()
+			return nil
+		}
+	*/
 	i, err := p.initializeIO(uid)
+	logrus.Warnf("return of initialize IO is: %+v\n", i)
 	if err != nil {
 		return err
 	}
 	p.shimIO = i
 	// non-tty
+	logrus.Warnf("non tty case\n")
 	for name, dest := range map[string]func(f *os.File){
 		p.state.Stdout: func(f *os.File) {
 			p.Add(1)
@@ -271,6 +311,7 @@ func (p *process) openIO() error {
 			}()
 		},
 	} {
+		logrus.Warnf("file to open: %+v\n", name)
 		f, err := os.OpenFile(name, syscall.O_RDWR, 0)
 		if err != nil {
 			return err

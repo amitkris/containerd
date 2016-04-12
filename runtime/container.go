@@ -123,6 +123,7 @@ func New(opts ContainerOpts) (Container, error) {
 		return nil, err
 	}
 	defer f.Close()
+	fmt.Printf("In runtime new, bundle: %+v, labels: %+v, runtime: %+v\n", bundle, labels, runtimeName)
 	if err := json.NewEncoder(f).Encode(state{
 		Bundle:      c.bundle,
 		Labels:      c.labels,
@@ -133,6 +134,7 @@ func New(opts ContainerOpts) (Container, error) {
 	}); err != nil {
 		return nil, err
 	}
+	fmt.Printf("Container returned from New container is: %+v\n", c)
 	return c, nil
 }
 
@@ -231,6 +233,7 @@ func (c *container) readSpec() (*specs.Spec, error) {
 	if err := json.NewDecoder(f).Decode(&spec); err != nil {
 		return nil, err
 	}
+	fmt.Printf("the spec is: %#v\n", &spec)
 	return &spec, nil
 }
 

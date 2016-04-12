@@ -962,6 +962,7 @@ func (c *aPIClient) ListCheckpoint(ctx context.Context, in *ListCheckpointReques
 }
 
 func (c *aPIClient) State(ctx context.Context, in *StateRequest, opts ...grpc.CallOption) (*StateResponse, error) {
+	fmt.Printf("tikilaka\n")
 	out := new(StateResponse)
 	err := grpc.Invoke(ctx, "/types.API/State", in, out, c.cc, opts...)
 	if err != nil {

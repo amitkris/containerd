@@ -12,7 +12,16 @@ func (p *process) Signal(s os.Signal) error {
 }
 
 func populateProcessStateForEncoding(config *processConfig, uid int, gid int) ProcessState {
-	return ProcessState{}
+	return ProcessState{
+		PlatformProcessState: PlatformProcessState{
+			Checkpoint: config.checkpoint,
+			RootUID:    uid,
+			RootGID:    gid,
+		},
+		Stdin:  config.stdio.Stdin,
+		Stdout: config.stdio.Stdout,
+		Stderr: config.stdio.Stderr,
+	}
 }
 
 func getExitPipe(path string) (*os.File, error) {
