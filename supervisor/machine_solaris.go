@@ -1,7 +1,11 @@
 package supervisor
 
-func CollectMachineInformation() (Machine, error) {
-	return Machine{}, nil
+type Machine struct {
+	Cpus   int
+	Memory int64
 }
 
-// TODO: new dependency import "github.com/cloudfoundry/gosigar"
+func CollectMachineInformation() (Machine, error) {
+	m := Machine{}
+	return m, nil
+}

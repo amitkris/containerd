@@ -1,17 +1,12 @@
 package runtime
 
 import (
-	"golang.org/x/sys/unix"
 	"os"
 	"syscall"
 )
 
-func populateProcessStateForEncoding(config *processConfig, uid int, gid int) ProcessState {
-	return ProcessState{}
-}
-
 func getExitPipe(path string) (*os.File, error) {
-	if err := unix.Mkfifo(path, 0755); err != nil && !os.IsExist(err) {
+	if err := syscall.Mkfifo(path, 0755); err != nil && !os.IsExist(err) {
 		return nil, err
 	}
 	// add NONBLOCK in case the other side has already closed or else
@@ -20,7 +15,7 @@ func getExitPipe(path string) (*os.File, error) {
 }
 
 func getControlPipe(path string) (*os.File, error) {
-	if err := unix.Mkfifo(path, 0755); err != nil && !os.IsExist(err) {
+	if err := syscall.Mkfifo(path, 0755); err != nil && !os.IsExist(err) {
 		return nil, err
 	}
 	return os.OpenFile(path, syscall.O_RDWR|syscall.O_NONBLOCK, 0)
