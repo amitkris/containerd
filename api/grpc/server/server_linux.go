@@ -5,8 +5,10 @@ import (
 
 	"github.com/docker/containerd/api/grpc/types"
 	"github.com/docker/containerd/specs"
+	"github.com/docker/containerd/supervisor"
 	"github.com/opencontainers/runc/libcontainer/system"
 	"golang.org/x/net/context"
+	ocs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
 var clockTicksPerSecond = uint64(system.GetClockTicks())

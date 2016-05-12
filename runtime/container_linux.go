@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"bytes"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/docker/containerd/specs"
 	"github.com/opencontainers/runc/libcontainer"
+	ocs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
 func (c *container) getLibctContainer() (libcontainer.Container, error) {

@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"syscall"
+	"os"
 )
 
 func createStdio() (s stdio, err error) {
