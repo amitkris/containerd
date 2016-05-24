@@ -452,9 +452,11 @@ func (c *container) startCmd(pid string, cmd *exec.Cmd, p *process) error {
 		}
 		return err
 	}
+	fmt.Printf("calling wait for start\n")
 	if err := c.waitForStart(p, cmd); err != nil {
 		return err
 	}
+	fmt.Printf("returned from wait for start\n")
 	c.processes[pid] = p
 	return nil
 }
