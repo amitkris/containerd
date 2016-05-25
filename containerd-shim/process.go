@@ -14,6 +14,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/docker/containerd/specs"
 )
 

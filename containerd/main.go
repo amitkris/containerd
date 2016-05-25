@@ -200,9 +200,9 @@ func startServer(protocol, address string, sv *supervisor.Supervisor) (*grpc.Ser
 			logrus.WithField("error", err).Fatal("containerd: serve grpc")
 		}
 	}()
-	return s, nil
 	fmt.Printf("2.9\n")
 	logrus.Debugf("containerd: grpc api on %s", address)
+	return s, nil
 }
 
 // getDefaultID returns the hostname for the instance host

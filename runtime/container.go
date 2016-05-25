@@ -123,7 +123,6 @@ func New(opts ContainerOpts) (Container, error) {
 		return nil, err
 	}
 	defer f.Close()
-	fmt.Printf("In runtime new, bundle: %+v, labels: %+v, runtime: %+v\n", bundle, labels, runtimeName)
 	if err := json.NewEncoder(f).Encode(state{
 		Bundle:      c.bundle,
 		Labels:      c.labels,
@@ -376,6 +375,9 @@ func (c *container) Start(checkpoint string, s Stdio) (Process, error) {
 		c.id, c.bundle, c.runtime,
 	)
 	cmd.Dir = processRoot
+
+	fmt.Printf("processRoot is: %+v\n", processRoot)
+
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setpgid: true,
 	}
@@ -538,6 +540,7 @@ type waitArgs struct {
 }
 
 func (c *container) waitForStart(p *process, cmd *exec.Cmd) error {
+	return nil
 	wc := make(chan error, 1)
 	go func() {
 		for {

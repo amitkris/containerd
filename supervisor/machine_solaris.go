@@ -1,7 +1,7 @@
 package supervisor
 
 import (
-	"errors"
+	_ "errors"
 )
 
 type Machine struct {
@@ -11,5 +11,6 @@ type Machine struct {
 
 func CollectMachineInformation() (Machine, error) {
 	m := Machine{}
-	return m, errors.New("supervisor CollectMachineInformation not implemented on Solaris")
+	//return m, errors.New("supervisor CollectMachineInformation not implemented on Solaris")
+	return m, nil
 }

@@ -352,38 +352,54 @@ func (s *Supervisor) restore() error {
 }
 
 func (s *Supervisor) handleTask(i Task) {
+	fmt.Printf("in handle task\n")
 	var err error
 	switch t := i.(type) {
 	case *AddProcessTask:
+		fmt.Printf("a\n")
 		err = s.addProcess(t)
 	case *CreateCheckpointTask:
+		fmt.Printf("b\n")
 		err = s.createCheckpoint(t)
 	case *DeleteCheckpointTask:
+		fmt.Printf("c\n")
 		err = s.deleteCheckpoint(t)
 	case *StartTask:
+		fmt.Printf("d\n")
 		err = s.start(t)
 	case *DeleteTask:
+		fmt.Printf("e\n")
 		err = s.delete(t)
 	case *ExitTask:
+		fmt.Printf("f\n")
 		err = s.exit(t)
 	case *ExecExitTask:
+		fmt.Printf("g\n")
 		err = s.execExit(t)
 	case *GetContainersTask:
+		fmt.Printf("h\n")
 		err = s.getContainers(t)
 	case *SignalTask:
+		fmt.Printf("i\n")
 		err = s.signal(t)
 	case *StatsTask:
+		fmt.Printf("j\n")
 		err = s.stats(t)
 	case *UpdateTask:
+		fmt.Printf("k\n")
 		err = s.updateContainer(t)
 	case *UpdateProcessTask:
+		fmt.Printf("l\n")
 		err = s.updateProcess(t)
 	case *OOMTask:
+		fmt.Printf("m\n")
 		err = s.oom(t)
 	default:
+		fmt.Printf("n\n")
 		err = ErrUnknownTask
 	}
 	if err != errDeferredResponse {
+		fmt.Printf("error is: %+v\n", err)
 		i.ErrorCh() <- err
 		close(i.ErrorCh())
 	}

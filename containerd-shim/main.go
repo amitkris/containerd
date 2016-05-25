@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/docker/containerd/osutils"
 	"github.com/docker/docker/pkg/term"
 )
@@ -32,6 +33,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	logrus.Warnf("containerd-shim main, hey\n")
 	if err := start(f); err != nil {
 		// this means that the runtime failed starting the container and will have the
 		// proper error messages in the runtime log so we should to treat this as a
