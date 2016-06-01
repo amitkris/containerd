@@ -236,18 +236,20 @@ var startCommand = cli.Command{
 		if context.Bool("attach") {
 			go func() {
 				io.Copy(stdin, os.Stdin)
+				fmt.Printf("In go func for updateProcess\n")
 				if _, err := c.UpdateProcess(netcontext.Background(), &types.UpdateProcessRequest{
 					Id:         id,
 					Pid:        "init",
 					CloseStdin: true,
 				}); err != nil {
+					fmt.Printf("updateProcess errored out\n")
 					fatal(err.Error(), 1)
 				}
 				restoreAndCloseStdin()
 			}()
 			fmt.Printf("6.0\n")
 			if tty {
-				resize(id, "init", c)
+				/*resize(id, "init", c)
 				go func() {
 					s := make(chan os.Signal, 64)
 					signal.Notify(s, syscall.SIGWINCH)
@@ -256,7 +258,7 @@ var startCommand = cli.Command{
 							log.Println(err)
 						}
 					}
-				}()
+				}()*/
 			}
 			waitForExit(c, events, id, "init", restoreAndCloseStdin)
 		}

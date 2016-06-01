@@ -119,8 +119,8 @@ func loadCheckpoint(bundle, name string) (*checkpoint, error) {
 }
 
 func (p *process) start() error {
-	logrus.Warnf("In process start stdio is: %+v\n", p.stdio)
-	cmd := exec.Command(p.runtime, "create")
+	logrus.Warnf("In process start stdio is: %+v and p.id is: %+v\n", p.stdio, p.id)
+	cmd := exec.Command(p.runtime, "start", p.id, p.bundle)
 	//cmd := exec.Command("/usr/bin/bash")
 	cmd.Dir = filepath.Dir(p.bundle)
 	cmd.Stdin = p.stdio.stdin
