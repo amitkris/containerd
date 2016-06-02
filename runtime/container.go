@@ -455,6 +455,7 @@ func (c *container) startCmd(pid string, cmd *exec.Cmd, p *process) error {
 		return err
 	}
 	fmt.Printf("calling wait for start\n")
+	time.Sleep(10 * time.Second)
 	if err := c.waitForStart(p, cmd); err != nil {
 		return err
 	}
@@ -541,17 +542,21 @@ type waitArgs struct {
 
 func (c *container) waitForStart(p *process, cmd *exec.Cmd) error {
 	return nil
+	fmt.Printf("In wait for start\n")
 	wc := make(chan error, 1)
 	go func() {
 		for {
 			if _, err := p.getPidFromFile(); err != nil {
+				fmt.Printf("err on getPidFromFile not nil\n")
 				if os.IsNotExist(err) || err == errInvalidPidInt {
+					fmt.Printf("err is: %+v\n", err)
 					alive, err := isAlive(cmd)
 					if err != nil {
 						wc <- err
 						return
 					}
 					if !alive {
+						fmt.Printf("not alive\n")
 						// runc could have failed to run the container so lets get the error
 						// out of the logs or the shim could have encountered an error
 						messages, err := readLogMessages(filepath.Join(p.root, "shim-log.json"))

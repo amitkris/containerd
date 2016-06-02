@@ -121,7 +121,6 @@ func loadCheckpoint(bundle, name string) (*checkpoint, error) {
 func (p *process) start() error {
 	logrus.Warnf("In process start stdio is: %+v and p.id is: %+v\n", p.stdio, p.id)
 	cmd := exec.Command(p.runtime, "start", p.id, p.bundle)
-	//cmd := exec.Command("/usr/bin/bash")
 	cmd.Dir = filepath.Dir(p.bundle)
 	cmd.Stdin = p.stdio.stdin
 	cmd.Stdout = p.stdio.stdout
@@ -139,6 +138,8 @@ func (p *process) start() error {
 		}
 		return err
 	}
+	p.stdio.stdout.Close()
+	p.stdio.stderr.Close()
 	if err := cmd.Wait(); err != nil {
 		logrus.Warnf("Error on cmd.Wait is: %+v\n", err)
 		if _, ok := err.(*exec.ExitError); ok {
@@ -240,7 +241,7 @@ func (p *process) pid() int {
 
 func (p *process) delete() error {
 	if !p.state.Exec {
-		out, err := exec.Command(p.runtime, append(p.state.RuntimeArgs, "delete", p.id)...).CombinedOutput()
+		out, err := exec.Command(p.runtime, append(p.state.RuntimeArgs, "stop", p.id)...).CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("%s: %v", out, err)
 		}
@@ -387,6 +388,7 @@ type stdio struct {
 }
 
 func (s *stdio) Close() error {
+	fmt.Printf("stdio is: %+v\n", s)
 	err := s.stdin.Close()
 	if oerr := s.stdout.Close(); err == nil {
 		err = oerr

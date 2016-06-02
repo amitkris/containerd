@@ -29,7 +29,7 @@ func (m *Monitor) Monitor(p runtime.Process) error {
 }
 
 func (m *Monitor) MonitorOOM(c runtime.Container) error {
-	return nil
+	return errors.New("Monitor not implemented on Solaris")
 }
 
 func (m *Monitor) Close() error {

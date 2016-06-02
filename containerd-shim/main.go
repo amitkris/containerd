@@ -7,11 +7,9 @@ import (
 	"os/signal"
 	"path/filepath"
 	"syscall"
-	"time"
 
-	"github.com/Sirupsen/logrus"
-	"github.com/docker/containerd/osutils"
-	"github.com/docker/docker/pkg/term"
+	_ "github.com/docker/containerd/osutils"
+	_ "github.com/docker/docker/pkg/term"
 )
 
 func writeMessage(f *os.File, level string, err error) {
@@ -33,7 +31,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	logrus.Warnf("containerd-shim main, hey\n")
+	writeMessage(f, "warn", fmt.Errorf("containerd-shim main, hey\n"))
 	if err := start(f); err != nil {
 		// this means that the runtime failed starting the container and will have the
 		// proper error messages in the runtime log so we should to treat this as a
@@ -45,6 +43,7 @@ func main() {
 		// log the error instead of writing to stderr because the shim will have
 		// /dev/null as it's stdio because it is supposed to be reparented to system
 		// init and will not have anyone to read from it
+		writeMessage(f, "error", err)
 		writeMessage(f, "error", err)
 		f.Close()
 		os.Exit(1)
@@ -62,13 +61,13 @@ func start(log *os.File) error {
 	//	return err
 	//}
 	// open the exit pipe
-	logrus.Warnf("in containerd-shim start, opening exit pipe\n")
+	writeMessage(log, "warn", fmt.Errorf("in containerd-shim start, opening exit pipe\n"))
 	f, err := os.OpenFile("exit", syscall.O_WRONLY, 0)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-	logrus.Warnf("in containerd-shim start, opening control\n")
+	writeMessage(log, "warn", fmt.Errorf("in containerd-shim start, opening control\n"))
 	control, err := os.OpenFile("control", syscall.O_RDWR, 0)
 	if err != nil {
 		return err
@@ -83,20 +82,20 @@ func start(log *os.File) error {
 			writeMessage(log, "warn", err)
 		}
 	}()
-	logrus.Warnf("in containerd-shim start, calling p.start\n")
+	writeMessage(log, "warn", fmt.Errorf("in containerd-shim start, calling p.start\n"))
 	if err := p.start(); err != nil {
 		p.delete()
-		logrus.Warnf("p.start returned with error: %+v\n", err)
+		writeMessage(log, "warn", fmt.Errorf("p.start returned with error: %+v\n", err))
 		return err
 	}
-	logrus.Warnf("going to sleep\n")
-	time.Sleep(time.Second * 30)
-	go func() {
+	writeMessage(log, "warn", fmt.Errorf("going to sleep\n"))
+	/*go func() {
 		for {
 			var msg, w, h int
 			if _, err := fmt.Fscanf(control, "%d %d %d\n", &msg, &w, &h); err != nil {
 				continue
 			}
+			writeMessage(log, "warn", fmt.Errorf("value of msg is: %+v\n", msg))
 			switch msg {
 			case 0:
 				// close stdin
@@ -115,9 +114,10 @@ func start(log *os.File) error {
 			}
 		}
 	}()
-	var exitShim bool
-	logrus.Warnf("signals received are: %+v\n", signals)
+	//var exitShim bool
+	writeMessage(log, "warn", fmt.Errorf("signals received are: %+v\n", signals))
 	for s := range signals {
+		exitShim = true
 		switch s {
 		case syscall.SIGCHLD:
 			exits, _ := osutils.Reap()
@@ -131,12 +131,13 @@ func start(log *os.File) error {
 		}
 		// runtime has exited so the shim can also exit
 		if exitShim {
+			writeMessage(log, "warn", fmt.Errorf("in exitshim\n"))
 			p.delete()
 			p.Wait()
 			return nil
 		}
-	}
-	logrus.Warnf("exit start\n")
+	}*/
+	writeMessage(log, "warn", fmt.Errorf("exit start\n"))
 	return nil
 }
 

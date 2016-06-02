@@ -223,6 +223,7 @@ func createAPIContainer(c runtime.Container, getPids bool) (*types.Container, er
 			})
 		}
 		procs = append(procs, proc)
+		fmt.Printf("1.1 container process\n")
 	}
 	fmt.Printf("2.0\n")
 	var pids []int

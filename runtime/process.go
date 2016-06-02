@@ -227,6 +227,7 @@ func (p *process) getPidFromFile() (int, error) {
 
 // Wait will reap the shim process
 func (p *process) Wait() {
+	fmt.Printf("in process wait, p.cmd is: %+v\n", p.cmd)
 	if p.cmd != nil {
 		p.cmd.Wait()
 	}
