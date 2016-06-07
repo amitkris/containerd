@@ -1,6 +1,9 @@
 package supervisor
 
-import "os"
+import (
+	"fmt"
+	"os"
+)
 
 type SignalTask struct {
 	baseTask
@@ -10,7 +13,8 @@ type SignalTask struct {
 }
 
 func (s *Supervisor) signal(t *SignalTask) error {
-	i, ok := s.containers[t.ID]
+	fmt.Printf("in supervisor signal\n")
+	i, ok := s.containers[t.ID[0:12]]
 	if !ok {
 		return ErrContainerNotFound
 	}
@@ -19,6 +23,7 @@ func (s *Supervisor) signal(t *SignalTask) error {
 		return err
 	}
 	for _, p := range processes {
+		fmt.Printf("sending signal to pid: %+v\n", p.ID())
 		if p.ID() == t.PID {
 			return p.Signal(t.Signal)
 		}

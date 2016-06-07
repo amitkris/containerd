@@ -295,8 +295,8 @@ func (s *Supervisor) oomHandler() {
 
 func (s *Supervisor) monitorProcess(p runtime.Process) error {
 	//XXX Solaris
-	return nil
-	//return s.monitor.Monitor(p)
+	//return nil
+	return s.monitor.Monitor(p)
 }
 
 func (s *Supervisor) restore() error {

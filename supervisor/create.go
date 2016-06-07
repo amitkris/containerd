@@ -44,7 +44,7 @@ func (s *Supervisor) start(t *StartTask) error {
 	if err != nil {
 		return err
 	}
-	s.containers[t.ID] = &containerInfo{
+	s.containers[t.ID[0:12]] = &containerInfo{
 		container: container,
 	}
 	ContainersCounter.Inc(1)

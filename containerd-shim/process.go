@@ -118,9 +118,9 @@ func loadCheckpoint(bundle, name string) (*checkpoint, error) {
 	return &cpt, nil
 }
 
-func (p *process) start() error {
-	logrus.Warnf("In process start stdio is: %+v and p.id is: %+v\n", p.stdio, p.id)
-	cmd := exec.Command(p.runtime, "start", p.id, p.bundle)
+func (p *process) start(log *os.File) error {
+	writeMessage(log, "warn", fmt.Errorf("In process start stdio is: %+v and p.id is: %+v\n", p.stdio, p.id))
+	cmd := exec.Command(p.runtime, "start", p.id[:12], p.bundle)
 	cmd.Dir = filepath.Dir(p.bundle)
 	cmd.Stdin = p.stdio.stdin
 	cmd.Stdout = p.stdio.stdout
@@ -128,9 +128,9 @@ func (p *process) start() error {
 	// Call out to setPDeathSig to set SysProcAttr as elements are platform specific
 	cmd.SysProcAttr = setPDeathSig()
 
-	logrus.Warnf("cmd is: %+v\n", cmd)
+	writeMessage(log, "warn", fmt.Errorf("cmd is: %+v\n", cmd))
 	if err := cmd.Start(); err != nil {
-		logrus.Warnf("Error on cmd.Start is: %+v\n", err)
+		writeMessage(log, "warn", fmt.Errorf("Error on cmd.Start is: %+v\n", err))
 		if exErr, ok := err.(*exec.Error); ok {
 			if exErr.Err == exec.ErrNotFound || exErr.Err == os.ErrNotExist {
 				return fmt.Errorf("%s not installed on system", p.runtime)
@@ -141,8 +141,9 @@ func (p *process) start() error {
 	p.stdio.stdout.Close()
 	p.stdio.stderr.Close()
 	if err := cmd.Wait(); err != nil {
-		logrus.Warnf("Error on cmd.Wait is: %+v\n", err)
+		writeMessage(log, "warn", fmt.Errorf("Error on cmd.Wait is: %+v, processState: %#v\n", err, cmd.ProcessState))
 		if _, ok := err.(*exec.ExitError); ok {
+			writeMessage(log, "warn", fmt.Errorf("ExitError is: %#v\n", err.(*exec.ExitError)))
 			return errRuntime
 		}
 		return err

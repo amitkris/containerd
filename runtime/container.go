@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -8,6 +9,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
+	"strings"
 	"syscall"
 	"time"
 
@@ -211,7 +214,7 @@ type container struct {
 }
 
 func (c *container) ID() string {
-	return c.id
+	return c.id[0:12]
 }
 
 func (c *container) Path() string {
@@ -238,13 +241,15 @@ func (c *container) readSpec() (*specs.Spec, error) {
 
 func (c *container) Delete() error {
 	err := os.RemoveAll(filepath.Join(c.root, c.id))
-
-	args := c.runtimeArgs
-	args = append(args, "delete", c.id)
-	if derr := exec.Command(c.runtime, args...).Run(); err == nil {
-		err = derr
-	}
-	return err
+	/*
+		args := c.runtimeArgs
+		args = append(args, "stop", c.id[0:12])
+		fmt.Printf("runtime args in container delete are: %+v\n", args)
+		if b, derr := exec.Command(c.runtime, args...).CombinedOutput(); err == nil {
+			fmt.Printf("error from runz stop is: %+v, out is: %+d\n", derr, string(b))
+			err = derr
+		}
+	*/return err
 }
 
 func (c *container) Processes() ([]Process, error) {
@@ -261,7 +266,9 @@ func (c *container) RemoveProcess(pid string) error {
 }
 
 func (c *container) State() State {
+	fmt.Printf("in container state, container is: %+v\n", c)
 	proc := c.processes["init"]
+	fmt.Printf("proc is: %+v\n", proc)
 	if proc == nil {
 		return Stopped
 	}
@@ -455,7 +462,6 @@ func (c *container) startCmd(pid string, cmd *exec.Cmd, p *process) error {
 		return err
 	}
 	fmt.Printf("calling wait for start\n")
-	time.Sleep(10 * time.Second)
 	if err := c.waitForStart(p, cmd); err != nil {
 		return err
 	}
@@ -474,13 +480,36 @@ func hostIDFromMap(id uint32, mp []ocs.IDMapping) int {
 }
 
 func (c *container) Pids() ([]int, error) {
+	var pids []int
+
+	if runtime.GOOS == "solaris" {
+		//we get this information from runz state
+		fmt.Printf("calling runz state, container id is: %+v\n", c.id)
+		cmd := exec.Command("runz", "state", c.id)
+		outBuf, errBuf := new(bytes.Buffer), new(bytes.Buffer)
+		cmd.Stdout, cmd.Stderr = outBuf, errBuf
+
+		if err := cmd.Run(); err != nil {
+			fmt.Printf("error on runz state is, err: %+v\n stdout:%+v\n stderr:%+v\n", err, outBuf.String(), errBuf.String())
+			if strings.Contains(errBuf.String(), "Container not found") {
+				return nil, errContainerNotFound
+			}
+			return nil, fmt.Errorf("Error is: %+v\n", err)
+		}
+		response := ocs.State{}
+		decoder := json.NewDecoder(outBuf)
+		if err := decoder.Decode(&response); err != nil {
+			return nil, fmt.Errorf("unable to decode json response: %+v", err)
+		}
+		pids = append(pids, response.Pid)
+		return pids, nil
+	}
 	args := c.runtimeArgs
 	args = append(args, "ps", "--format=json", c.id)
 	out, err := exec.Command(c.runtime, args...).CombinedOutput()
 	if err != nil {
 		return nil, fmt.Errorf("%s: %q", err.Error(), out)
 	}
-	var pids []int
 	if err := json.Unmarshal(out, &pids); err != nil {
 		return nil, err
 	}
@@ -541,14 +570,13 @@ type waitArgs struct {
 }
 
 func (c *container) waitForStart(p *process, cmd *exec.Cmd) error {
-	return nil
 	fmt.Printf("In wait for start\n")
 	wc := make(chan error, 1)
 	go func() {
 		for {
 			if _, err := p.getPidFromFile(); err != nil {
-				fmt.Printf("err on getPidFromFile not nil\n")
-				if os.IsNotExist(err) || err == errInvalidPidInt {
+				fmt.Printf("err on getPidFromFile not nil: %+v\n", err)
+				if os.IsNotExist(err) || err == errInvalidPidInt || err == errContainerNotFound {
 					fmt.Printf("err is: %+v\n", err)
 					alive, err := isAlive(cmd)
 					if err != nil {

@@ -19,9 +19,10 @@ var (
 	ErrContainerNotStarted   = errors.New("containerd: container not started")
 	ErrContainerStartTimeout = errors.New("containerd: container did not start before the specified timeout")
 
-	errNoPidFile      = errors.New("containerd: no process pid file found")
-	errInvalidPidInt  = errors.New("containerd: process pid is invalid")
-	errNotImplemented = errors.New("containerd: not implemented")
+	errNoPidFile         = errors.New("containerd: no process pid file found")
+	errInvalidPidInt     = errors.New("containerd: process pid is invalid")
+	errContainerNotFound = errors.New("containerd: container not found")
+	errNotImplemented    = errors.New("containerd: not implemented")
 )
 
 const (

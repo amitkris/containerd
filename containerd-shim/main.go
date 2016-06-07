@@ -83,7 +83,7 @@ func start(log *os.File) error {
 		}
 	}()
 	writeMessage(log, "warn", fmt.Errorf("in containerd-shim start, calling p.start\n"))
-	if err := p.start(); err != nil {
+	if err := p.start(log); err != nil {
 		p.delete()
 		writeMessage(log, "warn", fmt.Errorf("p.start returned with error: %+v\n", err))
 		return err

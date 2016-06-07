@@ -185,7 +185,7 @@ func (s *apiServer) State(ctx context.Context, r *types.StateRequest) (*types.St
 }
 
 func createAPIContainer(c runtime.Container, getPids bool) (*types.Container, error) {
-	fmt.Printf("in createAPIcontainers\n")
+	fmt.Printf("in createAPIcontainers, container is: %+v\n", c)
 	processes, err := c.Processes()
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, "get processes for container: "+err.Error())

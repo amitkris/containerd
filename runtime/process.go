@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -8,10 +9,14 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
+	"strings"
 	"syscall"
+	//"time"
 
 	"github.com/docker/containerd/specs"
+	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	"golang.org/x/sys/unix"
 )
 
@@ -213,6 +218,28 @@ func (p *process) State() State {
 }
 
 func (p *process) getPidFromFile() (int, error) {
+	if runtime.GOOS == "solaris" {
+		//we get this information from runz state
+		fmt.Printf("calling runz state, container id is: %+v\n", p.container.ID())
+		cmd := exec.Command("runz", "state", p.container.ID())
+		outBuf, errBuf := new(bytes.Buffer), new(bytes.Buffer)
+		cmd.Stdout, cmd.Stderr = outBuf, errBuf
+
+		if err := cmd.Run(); err != nil {
+			fmt.Printf("error on runz state is, err: %+v\n stdout:%+v\n stderr:%+v\n", err, outBuf.String(), errBuf.String())
+			if strings.Contains(errBuf.String(), "Container not found") {
+				return -1, errContainerNotFound
+			}
+			return -1, fmt.Errorf("Error is: %+v\n", err)
+		}
+		response := runtimespec.State{}
+		decoder := json.NewDecoder(outBuf)
+		if err := decoder.Decode(&response); err != nil {
+			return -1, fmt.Errorf("unable to decode json response: %+v", err)
+		}
+		p.pid = response.Pid
+		return p.pid, nil
+	}
 	data, err := ioutil.ReadFile(filepath.Join(p.root, "pid"))
 	if err != nil {
 		return -1, err
@@ -228,6 +255,8 @@ func (p *process) getPidFromFile() (int, error) {
 // Wait will reap the shim process
 func (p *process) Wait() {
 	fmt.Printf("in process wait, p.cmd is: %+v\n", p.cmd)
+	//fmt.Printf("going to slkeep\n")
+	//time.Sleep(time.Second * 60)
 	if p.cmd != nil {
 		p.cmd.Wait()
 	}
@@ -251,5 +280,6 @@ func getControlPipe(path string) (*os.File, error) {
 
 // Signal sends the provided signal to the process
 func (p *process) Signal(s os.Signal) error {
+	fmt.Printf("Sending signal: %+v to process: %+v\n", s.(syscall.Signal), p.pid)
 	return syscall.Kill(p.pid, s.(syscall.Signal))
 }
