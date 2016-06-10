@@ -9,11 +9,13 @@ import (
 	"errors"
 )
 
+// Machine 1
 type Machine struct {
 	Cpus   int
 	Memory int64
 }
 
+// CollectMachineInformation 1
 func CollectMachineInformation() (Machine, error) {
 	m := Machine{}
 	ncpus := C.sysconf(C._SC_NPROCESSORS_ONLN)

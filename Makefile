@@ -84,12 +84,12 @@ shell: dbuild
 	$(DOCKER_RUN) bash
 
 test: validate
-	go test -v $(shell go list ./... | grep -v /vendor | grep -v /integration-test)
-ifneq ($(wildcard /.dockerenv), )
-	$(MAKE) install bundles-rootfs
+	#go test -v $(shell go list ./... | grep -v /vendor | grep -v /integration-test)
+#ifneq ($(wildcard /.dockerenv), )
+	#$(MAKE) install bundles-rootfs
 	cd integration-test ; \
 	go test -check.v -check.timeout=$(TEST_TIMEOUT) timeout=$(TEST_SUITE_TIMEOUT) $(TESTFLAGS) github.com/docker/containerd/integration-test
-endif
+#endif
 
 validate: fmt
 

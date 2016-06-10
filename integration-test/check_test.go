@@ -146,6 +146,7 @@ func (cs *ContainerdSuite) RestartDaemon(kill bool) error {
 		"--state-dir", cs.stateDir,
 		"--listen", cs.grpcSocket,
 		"--metrics-interval", "0m0s",
+		"--runtime", "runz",
 		"--runtime-args", fmt.Sprintf("--root=%s", filepath.Join(cs.cwd, cs.outputDir, "runc")),
 	)
 	cd.Stderr = cs.logFile
@@ -189,7 +190,7 @@ func (cs *ContainerdSuite) SetUpSuite(c *check.C) {
 	}
 
 	// Clean old bundles
-	os.RemoveAll(bundlesDir)
+	//os.RemoveAll(bundlesDir)
 
 	// Ensure the oci bundles directory exists
 	if err := os.MkdirAll(bundlesDir, 0755); err != nil {
@@ -197,9 +198,9 @@ func (cs *ContainerdSuite) SetUpSuite(c *check.C) {
 	}
 
 	// Generate the reference spec
-	if err := generateReferenceSpecs(bundlesDir); err != nil {
-		c.Fatalf("Unable to generate OCI reference spec: %v", err)
-	}
+	//if err := generateReferenceSpecs(bundlesDir); err != nil {
+	//	c.Fatalf("Unable to generate OCI reference spec: %v", err)
+	//}
 
 	// Create our output directory
 	cs.outputDir = fmt.Sprintf(outputDirFormat, time.Now().Format("2006-01-02_150405.000000"))

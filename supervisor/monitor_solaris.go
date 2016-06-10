@@ -29,6 +29,7 @@ import (
 
 //XXX Solaris
 
+// NewMonitor 1
 func NewMonitor() (*Monitor, error) {
 	m := &Monitor{
 		receivers: make(map[int]interface{}),
@@ -45,6 +46,7 @@ func NewMonitor() (*Monitor, error) {
 	return m, nil
 }
 
+// Monitor 1
 type Monitor struct {
 	m         sync.Mutex
 	receivers map[int]interface{}
@@ -53,14 +55,17 @@ type Monitor struct {
 	epollFd   int
 }
 
+// Exits 1
 func (m *Monitor) Exits() chan runtime.Process {
 	return m.exits
 }
 
+// OOMs 1
 func (m *Monitor) OOMs() chan string {
 	return m.ooms
 }
 
+// Monitor 1
 func (m *Monitor) Monitor(p runtime.Process) error {
 	m.m.Lock()
 	defer m.m.Unlock()
@@ -73,6 +78,7 @@ func (m *Monitor) Monitor(p runtime.Process) error {
 	return nil
 }
 
+// MonitorOOM 1
 func (m *Monitor) MonitorOOM(c runtime.Container) error {
 	return nil
 	m.m.Lock()
@@ -90,6 +96,7 @@ func (m *Monitor) MonitorOOM(c runtime.Container) error {
 	return nil
 }
 
+// Close 1
 func (m *Monitor) Close() error {
 	_, err := C.close(C.int(m.epollFd))
 	return err

@@ -32,11 +32,11 @@ var bundleMap map[string]Bundle
 
 // untarRootfs untars the given `source` tarPath into `destination/rootfs`
 func untarRootfs(source string, destination string) error {
-	destination = filepath.Join(destination, "rootfs")
+	destination = filepath.Join(destination, "rootfs/root/")
 	if err := os.MkdirAll(destination, 0755); err != nil {
 		return nil
 	}
-	tar := exec.Command("tar", "-C", destination, "-xf", source)
+	tar := exec.Command("gtar", "-C", destination, "-xf", source)
 	return tar.Run()
 }
 
@@ -78,7 +78,7 @@ func CreateBundleWithFilter(source, name string, args []string, filter func(spec
 	// Nothing should be there, but just in case
 	os.RemoveAll(bundlePath)
 
-	if err := untarRootfs(filepath.Join(archivesDir, source+".tar"), bundlePath); err != nil {
+	if err := untarRootfs(filepath.Join(archivesDir, source+".tar.gz"), bundlePath); err != nil {
 		return fmt.Errorf("Failed to untar %s.tar: %v", source, err)
 	}
 
